@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage>
                     colors: const [
                       Color(0xffef0940),
                       Color(0xFF8F19EF),
-                     // Color(0xFF0827E8)
+                      // Color(0xFF0827E8)
                     ],
                     begin: _topAlignmentAnimation.value,
                     end: _bottomAlignmentAnimation.value,
@@ -98,11 +98,27 @@ class _HomePageState extends State<HomePage>
                 ));
           }),
       const Text('vibecheck',
-        style: TextStyle(
-          fontSize: 40,
-          height: 2,
-          fontFamily: 'Georgia',
-        ))
+          style: TextStyle(
+            fontSize: 40,
+            height: 2,
+            fontFamily: 'Georgia',
+          )),
+                  SizedBox(width: 50, height: 50),
+                  RawMaterialButton(
+                    onPressed: () {},
+                    elevation: 2.0,
+                    fillColor: Colors.red,
+                    child: Icon(
+                      Icons.mic,
+                      size: 80.0,
+                    ),
+                    padding: EdgeInsets.all(15.0),
+                    shape: CircleBorder(),
+                  )
+
+
+
+
     ])));
   }
 }
