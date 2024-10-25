@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,9 +15,37 @@ class _HomePageState extends State<HomePage>
   late Animation<Alignment> _topAlignmentAnimation;
   late Animation<Alignment> _bottomAlignmentAnimation;
 
+  final recorder = FlutterSoundRecorder();
+
+  Future initRecorder() async {
+    final status = await Permission.microphone.request();
+
+    if (status != PermissionStatus.granted) {
+     throw 'Microphone permission not granted.';
+    }
+  }
+
+  Future record() async {
+    await recorder.startRecorder(toFile: 'audio');
+  }
+
+  Future stop() async {
+    await recorder.stopRecorder();
+  }
+
+  @override
+  void dispose() {
+    recorder.closeRecorder();
+
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
+
+    initRecorder();
+
     _controller =
         AnimationController(vsync: this, duration: const Duration(seconds: 8));
 
@@ -72,6 +102,7 @@ class _HomePageState extends State<HomePage>
     _controller.repeat();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,16 +136,31 @@ class _HomePageState extends State<HomePage>
           )),
                   SizedBox(width: 50, height: 50),
                   RawMaterialButton(
-                    onPressed: () {},
-                    elevation: 2.0,
-                    fillColor: Colors.red,
                     child: Icon(
-                      Icons.mic,
-                      size: 80.0,
-                    ),
-                    padding: EdgeInsets.all(15.0),
-                    shape: CircleBorder(),
+                      recorder.isRecording ? Icons.stop : Icons.mic,
+                      size: 80,
+                      color: Colors.red),
+                    onPressed: () async {
+                      if (recorder.isRecording) {
+                        await stop();
+                      } else {
+                        await record();
+                      }
+
+                      setState(() {});
+                    },
                   )
+                  //RawMaterialButton(
+                  //  onPressed: () {},
+                  //  elevation: 2.0,
+                  //  fillColor: Colors.red,
+                  //  child: Icon(
+                  //    Icons.mic,
+                  //    size: 80.0,
+                  //  ),
+                  //  padding: EdgeInsets.all(15.0),
+                  //  shape: CircleBorder(),
+                  //)
 
 
 
