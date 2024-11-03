@@ -23,6 +23,8 @@ class _HomePageState extends State<HomePage>
     if (status != PermissionStatus.granted) {
      throw 'Microphone permission not granted.';
     }
+
+    await recorder.openRecorder();
   }
 
   Future record() async {
@@ -113,8 +115,8 @@ class _HomePageState extends State<HomePage>
           animation: _controller,
           builder: (BuildContext, context) {
             return Container(
-                width: 300,
-                height: 300,
+                width: 280,
+                height: 280,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: const [
@@ -134,12 +136,11 @@ class _HomePageState extends State<HomePage>
             height: 2,
             fontFamily: 'Georgia',
           )),
-                  SizedBox(width: 50, height: 50),
+                  const SizedBox(width: 10, height: 10),
                   RawMaterialButton(
-                    child: Icon(
-                      recorder.isRecording ? Icons.stop : Icons.mic,
-                      size: 80,
-                      color: Colors.red),
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(15.0),
+
                     onPressed: () async {
                       if (recorder.isRecording) {
                         await stop();
@@ -149,6 +150,12 @@ class _HomePageState extends State<HomePage>
 
                       setState(() {});
                     },
+
+                    child: Icon(
+                      recorder.isRecording ? Icons.stop : Icons.mic,
+                      size: 80,
+                      color: Colors.red
+                    ),
                   )
                   //RawMaterialButton(
                   //  onPressed: () {},
@@ -161,9 +168,6 @@ class _HomePageState extends State<HomePage>
                   //  padding: EdgeInsets.all(15.0),
                   //  shape: CircleBorder(),
                   //)
-
-
-
 
     ])));
   }
