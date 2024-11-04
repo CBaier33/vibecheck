@@ -37,6 +37,16 @@ class _HomePageState extends State<HomePage>
     Colors.purple,
   ];
 
+  // Rainbow colors mapped to emotion labels
+  final Map<String, Color> rainbowColors = {
+    'calm': Colors.blue,
+    'surprised': Colors.yellow,
+    'neutral': Colors.green,
+    'disgust': Colors.orange,
+    'fearful': Colors.red,
+    // Add more mappings if needed
+  };
+
   // Function to randomly select two colors from the rainbow
   List<Color> _updateGradientColors() {
     final random = Random();
@@ -86,9 +96,8 @@ class _HomePageState extends State<HomePage>
   }
 
   Future stop() async {
-    _changeColors();
-    sendToModel(vibeFile);
     await recorder.stopRecorder();
+    sendToModel(vibeFile);
   }
 
   @override
@@ -101,7 +110,7 @@ class _HomePageState extends State<HomePage>
   // API Call
   Future<void> sendToModel(String filePath) async {
 
-    final url = Uri.parse('https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition');
+    final url = Uri.parse('https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition/');
 
     // Read the file as bytes
     File audioFile = File(filePath);
@@ -117,8 +126,28 @@ class _HomePageState extends State<HomePage>
       var response = await request.send();
       if (response.statusCode == 200) {
         final responseBody = await response.stream.bytesToString();
-        final jsonResponse = jsonDecode(responseBody);
-        print("Response JSON: $jsonResponse");
+        List<dynamic> resultList = jsonDecode(responseBody);
+
+        // Sort the list by score in descending order
+        resultList.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+
+        // Take the top two results
+        final topResults = resultList.take(2).toList();
+
+        // Map labels to colors
+        List<Color> newColors = topResults
+            .map((result) => rainbowColors[result['label']] ?? Colors.grey) // Default to grey if no color is found
+            .toList();
+
+        // Update state with new gradient colors
+        setState(() {
+          _gradientColors = newColors;
+        });
+
+        // Display the results
+        for (var result in topResults) {
+          print('Label: ${result['label']}, Score: ${result['score']}');
+        }
       } else {
         print("Failed to send file: ${response.statusCode}");
       }
