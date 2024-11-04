@@ -39,11 +39,14 @@ class _HomePageState extends State<HomePage>
 
   // Rainbow colors mapped to emotion labels
   final Map<String, Color> rainbowColors = {
-    'calm': Colors.blue,
-    'surprised': Colors.yellow,
-    'neutral': Colors.green,
-    'disgust': Colors.orange,
-    'fearful': Colors.red,
+    'angry': Colors.red,
+    'fearful': Colors.green,
+    'disgust': Colors.purple,
+    'surprised': Colors.lightBlue,
+    'happy': Colors.yellow,
+    'calm': Colors.lightGreen,
+    'sad': Colors.blue,
+    'neutral': Colors.indigo,
     // Add more mappings if needed
   };
 
