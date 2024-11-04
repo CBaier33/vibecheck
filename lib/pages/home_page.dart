@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:math';
+import 'package:path_provider/path_provider.dart';
+import 'package:http_parser/http_parser.dart';
+import 'dart:io';
+import "package:http/http.dart" as http;
+import 'dart:convert';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,27 +17,77 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
+
+  // Gradient Colors
   late AnimationController _controller;
   late Animation<Alignment> _topAlignmentAnimation;
   late Animation<Alignment> _bottomAlignmentAnimation;
 
+
+  // Gradient Colors
+  List<Color> _gradientColors = [Colors.red, Colors.purple];
+
+  final List<Color> _rainbowColors = [
+    Colors.red,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.blue,
+    Colors.indigo,
+    Colors.purple,
+  ];
+
+  // Function to randomly select two colors from the rainbow
+  List<Color> _updateGradientColors() {
+    final random = Random();
+    Color color1 = _rainbowColors[random.nextInt(_rainbowColors.length)];
+    Color color2 = _rainbowColors[random.nextInt(_rainbowColors.length)];
+
+    // Ensure two different colors are picked
+    while (color1 == color2) {
+      color2 = _rainbowColors[random.nextInt(_rainbowColors.length)];
+    }
+
+    return [color1, color2];
+  }
+
+  void _changeColors() {
+    setState(() {
+      _gradientColors = _updateGradientColors();
+    });
+  }
+
+  // Microphone functions & permissions
   final recorder = FlutterSoundRecorder();
+
+  String vibeFile = '';
 
   Future initRecorder() async {
     final status = await Permission.microphone.request();
 
     if (status != PermissionStatus.granted) {
-     throw 'Microphone permission not granted.';
+      throw 'Microphone permission not granted.';
     }
 
     await recorder.openRecorder();
   }
 
-  Future record() async {
-    await recorder.startRecorder(toFile: 'audio');
+  Future<String?> record() async {
+    Directory tempDir = await getTemporaryDirectory();
+    String filePath =
+        '${tempDir.path}/vibecheck.wav'; // Adjust the file extension if necessary
+
+    await recorder.startRecorder(toFile: filePath);
+    print("Recording started, saving to $filePath");
+
+    vibeFile = filePath;
+
+    return filePath; // Return the path for later use
   }
 
   Future stop() async {
+    _changeColors();
+    sendToModel(vibeFile);
     await recorder.stopRecorder();
   }
 
@@ -40,6 +96,35 @@ class _HomePageState extends State<HomePage>
     recorder.closeRecorder();
 
     super.dispose();
+  }
+
+  // API Call
+  Future<void> sendToModel(String filePath) async {
+
+    final url = Uri.parse('https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition');
+
+    // Read the file as bytes
+    File audioFile = File(filePath);
+    List<int> fileBytes = await audioFile.readAsBytes();
+
+    // Create the request
+    var request = http.Request('POST', url)
+      ..headers['Authorization'] = 'Bearer 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'  // Replace with your API key
+      ..bodyBytes = fileBytes;  // Directly set the body as bytes
+
+    // Send the request
+    try {
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseBody);
+        print("Response JSON: $jsonResponse");
+      } else {
+        print("Failed to send file: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error occurred: $e");
+    }
   }
 
   @override
@@ -104,7 +189,6 @@ class _HomePageState extends State<HomePage>
     _controller.repeat();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,11 +203,7 @@ class _HomePageState extends State<HomePage>
                 height: 280,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: const [
-                      Color(0xffef0940),
-                      Color(0xFF8F19EF),
-                      // Color(0xFF0827E8)
-                    ],
+                    colors: _gradientColors,
                     begin: _topAlignmentAnimation.value,
                     end: _bottomAlignmentAnimation.value,
                   ),
@@ -136,39 +216,22 @@ class _HomePageState extends State<HomePage>
             height: 2,
             fontFamily: 'Georgia',
           )),
-                  const SizedBox(width: 10, height: 10),
-                  RawMaterialButton(
-                    shape: const CircleBorder(),
-                    padding: const EdgeInsets.all(15.0),
+      const SizedBox(width: 10, height: 10),
+      RawMaterialButton(
+        shape: const CircleBorder(),
+        padding: const EdgeInsets.all(15.0),
+        onPressed: () async {
+          if (recorder.isRecording) {
+            await stop();
+          } else {
+            await record();
+          }
 
-                    onPressed: () async {
-                      if (recorder.isRecording) {
-                        await stop();
-                      } else {
-                        await record();
-                      }
-
-                      setState(() {});
-                    },
-
-                    child: Icon(
-                      recorder.isRecording ? Icons.stop : Icons.mic,
-                      size: 80,
-                      color: Colors.red
-                    ),
-                  )
-                  //RawMaterialButton(
-                  //  onPressed: () {},
-                  //  elevation: 2.0,
-                  //  fillColor: Colors.red,
-                  //  child: Icon(
-                  //    Icons.mic,
-                  //    size: 80.0,
-                  //  ),
-                  //  padding: EdgeInsets.all(15.0),
-                  //  shape: CircleBorder(),
-                  //)
-
+          setState(() {});
+        },
+        child: Icon(recorder.isRecording ? Icons.stop : Icons.mic,
+            size: 80, color: Colors.red),
+      )
     ])));
   }
 }
