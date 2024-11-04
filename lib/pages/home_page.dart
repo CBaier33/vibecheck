@@ -3,7 +3,6 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:math';
 import 'package:path_provider/path_provider.dart';
-import 'package:http_parser/http_parser.dart';
 import 'dart:io';
 import "package:http/http.dart" as http;
 import 'dart:convert';
@@ -27,47 +26,24 @@ class _HomePageState extends State<HomePage>
   // Gradient Colors
   List<Color> _gradientColors = [Colors.red, Colors.purple];
 
-  final List<Color> _rainbowColors = [
-    Colors.red,
-    Colors.orange,
-    Colors.yellow,
-    Colors.green,
-    Colors.blue,
-    Colors.indigo,
-    Colors.purple,
-  ];
-
   // Rainbow colors mapped to emotion labels
-  final Map<String, Color> rainbowColors = {
+  final Map<String, Color> emotionBaseColors = {
     'angry': Colors.red,
-    'fearful': Colors.green,
-    'disgust': Colors.purple,
-    'surprised': Colors.lightBlue,
+    'calm': Colors.green,
+    'disgust': Colors.green.shade700,
+    'fearful': Colors.deepPurple,
     'happy': Colors.yellow,
-    'calm': Colors.lightGreen,
+    'neutral': Color(0xFFD2B48C),
     'sad': Colors.blue,
-    'neutral': Colors.indigo,
+    'surprised': Colors.orange,
     // Add more mappings if needed
   };
 
-  // Function to randomly select two colors from the rainbow
-  List<Color> _updateGradientColors() {
-    final random = Random();
-    Color color1 = _rainbowColors[random.nextInt(_rainbowColors.length)];
-    Color color2 = _rainbowColors[random.nextInt(_rainbowColors.length)];
-
-    // Ensure two different colors are picked
-    while (color1 == color2) {
-      color2 = _rainbowColors[random.nextInt(_rainbowColors.length)];
-    }
-
-    return [color1, color2];
-  }
-
-  void _changeColors() {
-    setState(() {
-      _gradientColors = _updateGradientColors();
-    });
+  // Adjust color intensity based on the score
+  Color _adjustColorIntensity(Color color, double score) {
+    final hsvColor = HSVColor.fromColor(color);
+    final intensity = (0.5 + score * 0.5).clamp(0.5, 1.0); // Scale score to [0.5, 1.0]
+    return hsvColor.withValue(intensity).toColor(); // Adjust brightness based on score
   }
 
   // Microphone functions & permissions
@@ -139,7 +115,10 @@ class _HomePageState extends State<HomePage>
 
         // Map labels to colors
         List<Color> newColors = topResults
-            .map((result) => rainbowColors[result['label']] ?? Colors.grey) // Default to grey if no color is found
+            .map((result) {
+          Color baseColor = emotionBaseColors[result['label']] ?? Colors.grey;
+          return _adjustColorIntensity(baseColor, result['score']);
+        })
             .toList();
 
         // Update state with new gradient colors
