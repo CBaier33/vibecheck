@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'dart:math';
-import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import "package:http/http.dart" as http;
 import 'dart:convert';
+import 'dart:async';
+import 'package:flutter_sound/flutter_sound.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
+  State<HomePage> createState() => _HomePageState(); }
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-
-  // Gradient Colors
+  // Animation Controllers
   late AnimationController _controller;
   late Animation<Alignment> _topAlignmentAnimation;
   late Animation<Alignment> _bottomAlignmentAnimation;
-
 
   // Gradient Colors
   List<Color> _gradientColors = [Colors.red, Colors.purple];
@@ -36,14 +33,16 @@ class _HomePageState extends State<HomePage>
     'neutral': Color(0xFFD2B48C),
     'sad': Colors.blue,
     'surprised': Colors.orange,
-    // Add more mappings if needed
   };
 
   // Adjust color intensity based on the score
   Color _adjustColorIntensity(Color color, double score) {
     final hsvColor = HSVColor.fromColor(color);
-    final intensity = (0.5 + score * 0.5).clamp(0.5, 1.0); // Scale score to [0.5, 1.0]
-    return hsvColor.withValue(intensity).toColor(); // Adjust brightness based on score
+    final intensity =
+        (0.5 + score * 0.5).clamp(0.5, 1.0); // Scale score to [0.5, 1.0]
+    return hsvColor
+        .withValue(intensity)
+        .toColor(); // Adjust brightness based on score
   }
 
   // Microphone functions & permissions
@@ -61,22 +60,18 @@ class _HomePageState extends State<HomePage>
     await recorder.openRecorder();
   }
 
-  Future<String?> record() async {
+  Future record() async {
     Directory tempDir = await getTemporaryDirectory();
-    String filePath =
-        '${tempDir.path}/vibecheck.wav'; // Adjust the file extension if necessary
+    String filePath = '${tempDir.path}/vibecheck.wav';
 
     await recorder.startRecorder(toFile: filePath);
-    print("Recording started, saving to $filePath");
 
     vibeFile = filePath;
-
-    return filePath; // Return the path for later use
   }
 
   Future stop() async {
     await recorder.stopRecorder();
-    sendToModel(vibeFile);
+    sendToAudioModel(vibeFile);
   }
 
   @override
@@ -87,9 +82,9 @@ class _HomePageState extends State<HomePage>
   }
 
   // API Call
-  Future<void> sendToModel(String filePath) async {
-
-    final url = Uri.parse('https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition/');
+  Future<void> sendToAudioModel(String filePath) async {
+    final url = Uri.parse(
+        'https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition/');
 
     // Read the file as bytes
     File audioFile = File(filePath);
@@ -97,8 +92,9 @@ class _HomePageState extends State<HomePage>
 
     // Create the request
     var request = http.Request('POST', url)
-      ..headers['Authorization'] = 'Bearer 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'  // Replace with your API key
-      ..bodyBytes = fileBytes;  // Directly set the body as bytes
+      ..headers['Authorization'] =
+          'Bearer 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' // Replace with your API key
+      ..bodyBytes = fileBytes; // Directly set the body as bytes
 
     // Send the request
     try {
@@ -108,18 +104,22 @@ class _HomePageState extends State<HomePage>
         List<dynamic> resultList = jsonDecode(responseBody);
 
         // Sort the list by score in descending order
-        resultList.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+        resultList.sort(
+            (a, b) => (b['score'] as double).compareTo(a['score'] as double));
 
         // Take the top two results
         final topResults = resultList.take(2).toList();
 
-        // Map labels to colors
+        // Get top two results and map them to colors
         List<Color> newColors = topResults
-            .map((result) {
-          Color baseColor = emotionBaseColors[result['label']] ?? Colors.grey;
-          return _adjustColorIntensity(baseColor, result['score']);
-        })
+            .map((result) => emotionBaseColors[result['label']] ?? Colors.grey)
             .toList();
+
+        // Map labels to colors
+        //List<Color> newColors = topResults.map((result) {
+        //  Color baseColor = emotionBaseColors[result['label']] ?? Colors.grey;
+        //  return _adjustColorIntensity(baseColor, result['score']);
+        //}).toList();
 
         // Update state with new gradient colors
         setState(() {
@@ -145,7 +145,7 @@ class _HomePageState extends State<HomePage>
     initRecorder();
 
     _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 8));
+        AnimationController(vsync: this, duration: const Duration(seconds: 9));
 
     _topAlignmentAnimation = TweenSequence<Alignment>(
       [
