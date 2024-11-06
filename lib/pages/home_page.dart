@@ -3,9 +3,8 @@ import 'dart:io';
 import "package:http/http.dart" as http;
 import 'dart:convert';
 import 'dart:async';
-import 'package:flutter_sound/flutter_sound.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
+import '../services/audio_recorder.dart';
+import '../animations/main_animation.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,10 +14,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  // Animation Controllers
-  late AnimationController _controller;
-  late Animation<Alignment> _topAlignmentAnimation;
-  late Animation<Alignment> _bottomAlignmentAnimation;
+
+  //// Animation Controllers
+  //late AnimationController _controller;
+  //late Animation<Alignment> _topAlignmentAnimation;
+  //late Animation<Alignment> _bottomAlignmentAnimation;
+
+  late GradientAnimationController gradientController;
 
   // Gradient Colors
   List<Color> _gradientColors = [Colors.red, Colors.purple];
@@ -35,50 +37,41 @@ class _HomePageState extends State<HomePage>
     'surprised': Colors.orange,
   };
 
-  // Adjust color intensity based on the score
-  Color _adjustColorIntensity(Color color, double score) {
-    final hsvColor = HSVColor.fromColor(color);
-    final intensity =
-        (0.5 + score * 0.5).clamp(0.5, 1.0); // Scale score to [0.5, 1.0]
-    return hsvColor
-        .withValue(intensity)
-        .toColor(); // Adjust brightness based on score
-  }
-
   // Microphone functions & permissions
-  final recorder = FlutterSoundRecorder();
+  final AudioRecorder recorder = AudioRecorder();
 
-  String vibeFile = '';
-
-  Future initRecorder() async {
-    final status = await Permission.microphone.request();
-
-    if (status != PermissionStatus.granted) {
-      throw 'Microphone permission not granted.';
-    }
-
-    await recorder.openRecorder();
-  }
+  // Recording style -> audio or text
+  String recordingStyle = 'audio';
 
   Future record() async {
-    Directory tempDir = await getTemporaryDirectory();
-    String filePath = '${tempDir.path}/vibecheck.wav';
-
-    await recorder.startRecorder(toFile: filePath);
-
-    vibeFile = filePath;
+    if (recordingStyle == 'audio') {
+      await recorder.record();
+    }
   }
 
   Future stop() async {
-    await recorder.stopRecorder();
-    sendToAudioModel(vibeFile);
+    if (recordingStyle == 'audio') {
+      await recorder.stop();
+      sendToAudioModel(recorder.vibeFile);
+    }
   }
 
   @override
   void dispose() {
-    recorder.closeRecorder();
+    if (recordingStyle == 'audio') {
+      recorder.dispose();
+    }
 
     super.dispose();
+  }
+
+  bool isRecording() {
+    if (recordingStyle == 'audio') {
+      return recorder.recorder.isRecording;
+    } else {
+     // handle text recording
+      return false;
+    }
   }
 
   // API Call
@@ -115,12 +108,6 @@ class _HomePageState extends State<HomePage>
             .map((result) => emotionBaseColors[result['label']] ?? Colors.grey)
             .toList();
 
-        // Map labels to colors
-        //List<Color> newColors = topResults.map((result) {
-        //  Color baseColor = emotionBaseColors[result['label']] ?? Colors.grey;
-        //  return _adjustColorIntensity(baseColor, result['score']);
-        //}).toList();
-
         // Update state with new gradient colors
         setState(() {
           _gradientColors = newColors;
@@ -142,62 +129,65 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
 
-    initRecorder();
+    recorder.initRecorder();
 
-    _controller =
-        AnimationController(vsync: this, duration: const Duration(seconds: 9));
+    gradientController = GradientAnimationController(vsync: this);
+    gradientController.start();
 
-    _topAlignmentAnimation = TweenSequence<Alignment>(
-      [
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.topLeft, end: Alignment.topRight),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.topRight, end: Alignment.bottomRight),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.bottomLeft, end: Alignment.topLeft),
-          weight: 1,
-        ),
-      ],
-    ).animate(_controller);
+    //_controller =
+    //    AnimationController(vsync: this, duration: const Duration(seconds: 9));
 
-    _bottomAlignmentAnimation = TweenSequence<Alignment>(
-      [
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.bottomLeft, end: Alignment.topLeft),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.topLeft, end: Alignment.topRight),
-          weight: 1,
-        ),
-        TweenSequenceItem<Alignment>(
-          tween: Tween<Alignment>(
-              begin: Alignment.topRight, end: Alignment.bottomRight),
-          weight: 1,
-        ),
-      ],
-    ).animate(_controller);
+    //_topAlignmentAnimation = TweenSequence<Alignment>(
+    //  [
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.topLeft, end: Alignment.topRight),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.topRight, end: Alignment.bottomRight),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.bottomLeft, end: Alignment.topLeft),
+    //      weight: 1,
+    //    ),
+    //  ],
+    //).animate(_controller);
 
-    _controller.repeat();
+    //_bottomAlignmentAnimation = TweenSequence<Alignment>(
+    //  [
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.bottomLeft, end: Alignment.topLeft),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.topLeft, end: Alignment.topRight),
+    //      weight: 1,
+    //    ),
+    //    TweenSequenceItem<Alignment>(
+    //      tween: Tween<Alignment>(
+    //          begin: Alignment.topRight, end: Alignment.bottomRight),
+    //      weight: 1,
+    //    ),
+    //  ],
+    //).animate(_controller);
+
+    //_controller.repeat();
   }
 
   @override
@@ -207,7 +197,7 @@ class _HomePageState extends State<HomePage>
             child:
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       AnimatedBuilder(
-          animation: _controller,
+          animation: gradientController.controller,
           builder: (BuildContext, context) {
             return Container(
                 width: 280,
@@ -215,8 +205,8 @@ class _HomePageState extends State<HomePage>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: _gradientColors,
-                    begin: _topAlignmentAnimation.value,
-                    end: _bottomAlignmentAnimation.value,
+                    begin: gradientController.topAlignment.value,
+                    end: gradientController.bottomAlignment.value,
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ));
@@ -232,7 +222,7 @@ class _HomePageState extends State<HomePage>
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(15.0),
         onPressed: () async {
-          if (recorder.isRecording) {
+          if (isRecording()) {
             await stop();
           } else {
             await record();
@@ -240,7 +230,7 @@ class _HomePageState extends State<HomePage>
 
           setState(() {});
         },
-        child: Icon(recorder.isRecording ? Icons.stop : Icons.mic,
+        child: Icon(isRecording() ? Icons.stop : Icons.mic,
             size: 80, color: Colors.red),
       )
     ])));
