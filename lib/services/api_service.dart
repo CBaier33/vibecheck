@@ -7,16 +7,15 @@ class ApiService {
   final String _apiKey =
       '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'; // Replace with your actual API key
 
-  // Rainbow colors mapped to emotion labels
   final Map<String, Color> emotionBaseColors = {
-    'angry': Colors.red,
-    'calm': Colors.green,
-    'disgust': Colors.green.shade700,
-    'fearful': Colors.deepPurple,
-    'happy': Colors.yellow,
-    'neutral': Color(0xFFD2B48C),
-    'sad': Colors.blue,
-    'surprised': Colors.orange,
+    'angry': Colors.redAccent,  // Brighter red
+    'calm': Colors.greenAccent,  // Brighter green
+    'disgust': Colors.lime,  // Brighter green shade
+    'fearful': Colors.purpleAccent,  // Brighter purple
+    'happy': Colors.yellow,  // Brighter yellow
+    'neutral': Color(0xFFFAEBD7),  // Lighter beige (brighter version of tan)
+    'sad': Colors.lightBlue,  // Brighter blue
+    'surprised': Colors.deepOrangeAccent,  // Brighter orange
   };
 
   final Map<String, String> audioEmotionPairNames = {
@@ -27,7 +26,7 @@ class ApiService {
     'angry_neutral': "Apathy",
     'angry_sad': "Sorrow",
     'angry_surprised': "Shock",
-    'calm_disgust': "Repulsion",
+    'calm_disgust': "Distaste",
     'calm_fearful': "Anxiety",
     'calm_happy': "Serenity",
     'calm_neutral': "Equanimity",

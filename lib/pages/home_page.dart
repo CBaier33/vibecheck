@@ -17,8 +17,8 @@ class _HomePageState extends State<HomePage>
   //// Animation Controllers
   late GradientAnimationController gradientController;
 
-  final List<Color> _defaultGradient = [Colors.purple, Colors.teal]; // Gradient Colors
-  List<Color> _gradientColors = [Colors.purple, Colors.teal]; // Gradient Colors
+  final List<Color> _defaultGradient = [Colors.purpleAccent, Colors.tealAccent]; // Gradient Colors
+  List<Color> _gradientColors = [Colors.purpleAccent, Colors.tealAccent]; // Gradient Colors
 
   //// API Service
   final ApiService apiService = ApiService();
@@ -41,6 +41,11 @@ class _HomePageState extends State<HomePage>
 
   Future record() async {
     if (recordingStyle == 'audio') {
+      setState(() {
+        _emotionLabel = '';
+        _gradientColors = [Colors.white, Colors.white];
+        _gradientColors = _defaultGradient;
+      });
       await recorder.record();
     }
   }
@@ -60,6 +65,7 @@ class _HomePageState extends State<HomePage>
 
         if (newColors != null) {
           setState(() {
+            _gradientColors = [Colors.white, Colors.white];
             _gradientColors = newColors;
           });
 
@@ -129,7 +135,7 @@ class _HomePageState extends State<HomePage>
             children: [
               // Use AnimatedContainer to smoothly transition gradient colors
               AnimatedContainer(
-                duration: Duration(seconds: 1), // Duration of the fade effect
+                duration: Duration(milliseconds: 500), // Duration of the fade effect
                 width: 280,
                 height: 280,
                 decoration: BoxDecoration(
