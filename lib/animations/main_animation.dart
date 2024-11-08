@@ -1,26 +1,66 @@
 import 'package:flutter/material.dart';
 
 class GradientAnimationController {
-  final AnimationController controller;
-  final Animation<Alignment> topAlignment;
-  final Animation<Alignment> bottomAlignment;
+  late final AnimationController controller;
+  late final Animation<Alignment> topAlignmentAnimation;
+  late final Animation<Alignment> bottomAlignmentAnimation;
 
-  GradientAnimationController({required TickerProvider vsync})
-      : controller = AnimationController(vsync: vsync, duration: const Duration(seconds: 9)),
-        topAlignment = TweenSequence<Alignment>([
-          TweenSequenceItem(tween: Tween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
-        ]).animate(vsync as AnimationController),
-        bottomAlignment = TweenSequence<Alignment>([
-          TweenSequenceItem(tween: Tween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
-          TweenSequenceItem(tween: Tween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
-        ]).animate(vsync as AnimationController);
+  GradientAnimationController(TickerProvider vsync) {
+    controller = AnimationController(
+      vsync: vsync,
+      duration: const Duration(seconds: 9),
+    );
 
-  void start() {
+    topAlignmentAnimation = TweenSequence<Alignment>(
+      [
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topLeft, end: Alignment.topRight),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topRight, end: Alignment.bottomRight),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomLeft, end: Alignment.topLeft),
+          weight: 1,
+        ),
+      ],
+    ).animate(controller);
+
+    bottomAlignmentAnimation = TweenSequence<Alignment>(
+      [
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomRight, end: Alignment.bottomLeft),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.bottomLeft, end: Alignment.topLeft),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topLeft, end: Alignment.topRight),
+          weight: 1,
+        ),
+        TweenSequenceItem<Alignment>(
+          tween: Tween<Alignment>(
+              begin: Alignment.topRight, end: Alignment.bottomRight),
+          weight: 1,
+        ),
+      ],
+    ).animate(controller);
+
     controller.repeat();
   }
 

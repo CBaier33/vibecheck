@@ -31,7 +31,6 @@ class AudioRecorder {
       await recorder.stopRecorder();
   }
 
-  @override
   void dispose() {
       recorder.closeRecorder();
   }
