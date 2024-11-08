@@ -4,7 +4,6 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 class AudioRecorder {
-
   final recorder = FlutterSoundRecorder();
 
   String vibeFile = '';
@@ -19,19 +18,19 @@ class AudioRecorder {
   }
 
   Future record() async {
-      Directory tempDir = await getTemporaryDirectory();
-      String filePath = '${tempDir.path}/vibecheck.wav';
+    Directory tempDir = await getTemporaryDirectory();
+    String filePath = '${tempDir.path}/vibecheck.wav';
 
-      await recorder.startRecorder(toFile: filePath);
+    await recorder.startRecorder(toFile: filePath);
 
-      vibeFile = filePath;
+    vibeFile = filePath;
   }
 
   Future stop() async {
-      await recorder.stopRecorder();
+    await recorder.stopRecorder();
   }
 
   void dispose() {
-      recorder.closeRecorder();
+    recorder.closeRecorder();
   }
 }

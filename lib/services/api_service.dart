@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String _apiKey = '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'; // Replace with your actual API key
+  final String _apiKey =
+      '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'; // Replace with your actual API key
 
   // Rainbow colors mapped to emotion labels
   final Map<String, Color> emotionBaseColors = {
@@ -73,7 +74,7 @@ class ApiService {
         List<dynamic> resultList = jsonDecode(responseBody);
 
         resultList.sort(
-                (a, b) => (b['score'] as double).compareTo(a['score'] as double));
+            (a, b) => (b['score'] as double).compareTo(a['score'] as double));
 
         final topResults = resultList.take(2).toList();
 
@@ -81,14 +82,12 @@ class ApiService {
             .map((result) => emotionBaseColors[result['label']] ?? Colors.grey)
             .toList();
 
-        List<String> emotions = topResults
-            .map((result) => result['label'].toString())
-            .toList();
+        List<String> emotions =
+            topResults.map((result) => result['label'].toString()).toList();
 
         emotions.sort();
 
         return [newColors, emotions];
-
       } else {
         print("Failed to send file: ${response.statusCode}");
         return null;

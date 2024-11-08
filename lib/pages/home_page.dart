@@ -8,17 +8,33 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState(); }
+  State<HomePage> createState() => _HomePageState();
+}
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
 
-  late GradientAnimationController gradientController; // Animation Controllers
-  final ApiService apiService = ApiService(); // API Service
-  final AudioRecorder recorder = AudioRecorder(); // Microphone functions & permissions
+  //// Animation Controllers
+  late GradientAnimationController gradientController;
 
-  List<Color> _gradientColors = [Colors.teal, Colors.black]; // Gradient Colors
+  final List<Color> _defaultGradient = [Colors.purple, Colors.teal]; // Gradient Colors
+  List<Color> _gradientColors = [Colors.purple, Colors.teal]; // Gradient Colors
+
+  //// API Service
+  final ApiService apiService = ApiService();
+
   String _emotionLabel = '';
+
+  bool isLoading = false;
+
+  void _updateLoading(bool loading) {
+    setState(() {
+      isLoading = loading;
+    });
+  }
+
+  //// Microphone functions & permissions
+  final AudioRecorder recorder = AudioRecorder();
 
   // Recording style -> audio or text
   String recordingStyle = 'audio';
@@ -32,9 +48,10 @@ class _HomePageState extends State<HomePage>
   Future stop() async {
     if (recordingStyle == 'audio') {
       await recorder.stop();
-      List<dynamic>? results = await apiService.sendToAudioModel(recorder.vibeFile);
-
-      print(results);
+      _updateLoading(true);
+      List<dynamic>? results =
+          await apiService.sendToAudioModel(recorder.vibeFile);
+      _updateLoading(false);
 
       if (results != null) {
         List<Color>? newColors = results[0];
@@ -46,7 +63,6 @@ class _HomePageState extends State<HomePage>
           });
 
           if (emotions != null) {
-
             String emotion = emotions.join('_');
             String? emotionMatch = apiService.getAudioEmotionPairName(emotion);
 
@@ -56,9 +72,14 @@ class _HomePageState extends State<HomePage>
               setState(() {
                 _emotionLabel = emotionLabel;
               });
-           }
+            }
           }
         }
+      } else {
+        setState(() {
+          _emotionLabel = "Please try again.";
+          _gradientColors = _defaultGradient;
+        });
       }
     }
   }
@@ -75,7 +96,7 @@ class _HomePageState extends State<HomePage>
     if (recordingStyle == 'audio') {
       return recorder.recorder.isRecording;
     } else {
-     // handle text recording
+      // handle text recording
       return false;
     }
   }
@@ -95,11 +116,21 @@ class _HomePageState extends State<HomePage>
         body: Center(
             child:
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(_emotionLabel),
+      Text(_emotionLabel,
+          style: TextStyle(
+            fontFamily: 'Georgia',
+            fontStyle: FontStyle.italic,
+            fontSize: 15,
+          )),
       AnimatedBuilder(
-          animation: gradientController.controller,
-          builder: (BuildContext, context) {
-            return Container(
+        animation: gradientController.controller,
+        builder: (BuildContext context, _) {
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Use AnimatedContainer to smoothly transition gradient colors
+              AnimatedContainer(
+                duration: Duration(seconds: 1), // Duration of the fade effect
                 width: 280,
                 height: 280,
                 decoration: BoxDecoration(
@@ -109,8 +140,18 @@ class _HomePageState extends State<HomePage>
                     end: gradientController.bottomAlignmentAnimation.value,
                   ),
                   borderRadius: BorderRadius.circular(20),
-                ));
-          }),
+                ),
+              ),
+
+              // Show a centered loading spinner if isLoading is true
+              if (isLoading)
+                Center(
+                  child: CircularProgressIndicator(),
+                ),
+            ],
+          );
+        },
+      ),
       const Text('vibecheck',
           style: TextStyle(
             fontSize: 40,
@@ -131,7 +172,7 @@ class _HomePageState extends State<HomePage>
         },
         child: Icon(isRecording() ? Icons.stop : Icons.mic,
             size: 80, color: Colors.red),
-      )
+      ),
     ])));
   }
 }
