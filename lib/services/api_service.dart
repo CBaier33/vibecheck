@@ -18,7 +18,43 @@ class ApiService {
     'surprised': Colors.orange,
   };
 
-  Future<List<Color>?> sendToAudioModel(String filePath) async {
+  final Map<String, String> audioEmotionPairNames = {
+    'angry_calm': "Vehemence",
+    'angry_disgust': "Revulsion",
+    'angry_fearful': "Dread",
+    'angry_happy': "Jubilance",
+    'angry_neutral': "Apathy",
+    'angry_sad': "Sorrow",
+    'angry_surprised': "Shock",
+    'calm_disgust': "Repulsion",
+    'calm_fearful': "Anxiety",
+    'calm_happy': "Serenity",
+    'calm_neutral': "Equanimity",
+    'calm_sad': "Melancholy",
+    'calm_surprised': "Awakening",
+    'disgust_fearful': "Horror",
+    'disgust_happy': "Contradiction",
+    'disgust_neutral': "Indifference",
+    'disgust_sad': "Despair",
+    'disgust_surprised': "Astonishment",
+    'fearful_happy': "Elation",
+    'fearful_neutral': "Unease",
+    'fearful_sad': "Despondency",
+    'fearful_surprised': "Trepidation",
+    'happy_neutral': "Contentment",
+    'happy_sad': "Bittersweet",
+    'happy_surprised': "Amazement",
+    'neutral_sad': "Nostalgia",
+    'neutral_surprised': "Intrigue",
+    'sad_surprised': "Disbelief",
+  };
+
+// Function to get emotion name based on List<Color>
+  String? getAudioEmotionPairName(String emotions) {
+    return audioEmotionPairNames[emotions];
+  }
+
+  Future<List<dynamic>?> sendToAudioModel(String filePath) async {
     final url = Uri.parse(
       'https://api-inference.huggingface.co/models/ehcalabres/wav2vec2-lg-xlsr-en-speech-emotion-recognition/',
     );
@@ -45,12 +81,14 @@ class ApiService {
             .map((result) => emotionBaseColors[result['label']] ?? Colors.grey)
             .toList();
 
-        // Display the results
-        for (var result in topResults) {
-          print('Label: ${result['label']}, Score: ${result['score']}');
-        }
+        List<String> emotions = topResults
+            .map((result) => result['label'].toString())
+            .toList();
 
-        return newColors;
+        emotions.sort();
+
+        return [newColors, emotions];
+
       } else {
         print("Failed to send file: ${response.statusCode}");
         return null;

@@ -14,11 +14,11 @@ class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
 
   late GradientAnimationController gradientController; // Animation Controllers
-
-  List<Color> _gradientColors = [Colors.red, Colors.purple]; // Gradient Colors
-
   final ApiService apiService = ApiService(); // API Service
   final AudioRecorder recorder = AudioRecorder(); // Microphone functions & permissions
+
+  List<Color> _gradientColors = [Colors.teal, Colors.black]; // Gradient Colors
+  String _emotionLabel = '';
 
   // Recording style -> audio or text
   String recordingStyle = 'audio';
@@ -32,11 +32,33 @@ class _HomePageState extends State<HomePage>
   Future stop() async {
     if (recordingStyle == 'audio') {
       await recorder.stop();
-      List<Color>? newColors = await apiService.sendToAudioModel(recorder.vibeFile);
-      if (newColors != null) {
-        setState(() {
-          _gradientColors = newColors;
-        });
+      List<dynamic>? results = await apiService.sendToAudioModel(recorder.vibeFile);
+
+      print(results);
+
+      if (results != null) {
+        List<Color>? newColors = results[0];
+        List<String>? emotions = results[1];
+
+        if (newColors != null) {
+          setState(() {
+            _gradientColors = newColors;
+          });
+
+          if (emotions != null) {
+
+            String emotion = emotions.join('_');
+            String? emotionMatch = apiService.getAudioEmotionPairName(emotion);
+
+            if (emotionMatch != null) {
+              String emotionLabel = '$emotionMatch (${emotions.join(', ')})';
+
+              setState(() {
+                _emotionLabel = emotionLabel;
+              });
+           }
+          }
+        }
       }
     }
   }
@@ -64,7 +86,7 @@ class _HomePageState extends State<HomePage>
 
     recorder.initRecorder();
     gradientController = GradientAnimationController(this);
-
+    //apiService.initializeAudioEmotionPairNames();
   }
 
   @override
@@ -73,6 +95,7 @@ class _HomePageState extends State<HomePage>
         body: Center(
             child:
                 Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text(_emotionLabel),
       AnimatedBuilder(
           animation: gradientController.controller,
           builder: (BuildContext, context) {
@@ -104,7 +127,6 @@ class _HomePageState extends State<HomePage>
           } else {
             await record();
           }
-
           setState(() {});
         },
         child: Icon(isRecording() ? Icons.stop : Icons.mic,
