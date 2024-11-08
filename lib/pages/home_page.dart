@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage>
   Future stop() async {
     if (recordingStyle == 'audio') {
       await recorder.stop();
+
       _updateLoading(true);
       List<dynamic>? results =
           await apiService.sendToAudioModel(recorder.vibeFile);
@@ -78,7 +79,6 @@ class _HomePageState extends State<HomePage>
       } else {
         setState(() {
           _emotionLabel = "Please try again.";
-          _gradientColors = _defaultGradient;
         });
       }
     }
@@ -107,7 +107,6 @@ class _HomePageState extends State<HomePage>
 
     recorder.initRecorder();
     gradientController = GradientAnimationController(this);
-    //apiService.initializeAudioEmotionPairNames();
   }
 
   @override
